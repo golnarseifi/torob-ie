@@ -28,6 +28,7 @@
     "moment": "^2.29.3",
     "morgan": "^1.10.0",
     "node-fetch": "2.6.7",
+    "nodemailer": "^6.7.5",
     "pg-promise": "10.11.1",
     "promise": "8.1.0",
     "supertest": "^6.2.3",

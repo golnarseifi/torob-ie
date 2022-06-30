@@ -6,6 +6,15 @@ module.exports = function (next) {
         process.on("unhandledRejection", function (reason, promise) {
             config.err_func(null, null, reason);
         });
+        global.mailer = require("nodemailer").createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true, // true for 465, false for other ports
+            auth: {
+                user: config.EmailService.user,
+                pass: config.EmailService.pass, // generated ethereal password
+            },
+        });
         global.express = require('express')
         global.os = require('os');
         global._ = require('lodash');
