@@ -301,16 +301,35 @@ router.post('/customer/set_product_favorite_status', handle_error(async (req, re
 
 router.post('/customer/report_store', handle_error(async (req, res) => {
 	let store_id = req.body.store_id;
+	let product_id = req.body.product_id;
 	let customer_id = req.body.customer_id;
 	let description = req.body.description;
 
-	if (!store_id || !description || !customer_id)
-		return res.status(200).json({success: false, message: 'store_id or description or customer_id is wrong'});
+	if (!store_id || !description || !customer_id ||!product_id)
+		return res.status(200).json({success: false, message: 'store_id or description or customer_id or product_id is wrong'});
 
 	await db.task(async t => {
-		let report = await t.oneOrNone(`INSERT INTO report (store_id, description, customer_id)
-										VALUES ($1, $2, $3) RETURNING *`, [store_id, description, customer_id]);
+		let report = await t.oneOrNone(`INSERT INTO report (store_id, description, product_id)
+										VALUES ($1, $2, $3, $4) RETURNING *`, [store_id, description, customer_id, product_id]);
 		return res.json({success: true, data: report});
+	});
+}));
+
+router.post('/customer/get_admin_reports', handle_error(async (req, res) => {
+	let store_id = req.body.store_id;
+
+	if (!store_id)
+		return res.status(200).json({success: false, message: 'store_id is wrong'});
+
+	await db.task(async t => {
+		let reports = await t.any(`SELECT report.*,
+                                          product_store.price,
+                                          product_store.url,
+                                          product_store.row_creation_time
+                                   FROM report
+                                            LEFT JOIN product_store ON product_store.product_id = report.product_id
+                                   WHERE report.store_id = $1`, [store_id]);
+		return res.json({success: true, data: reports});
 	});
 }));
 
