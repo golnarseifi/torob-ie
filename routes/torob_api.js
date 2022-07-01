@@ -314,6 +314,15 @@ router.post('/customer/report_store', handle_error(async (req, res) => {
 	});
 }));
 
+router.post('/customer/get_favorite_list', handle_error(async (req, res) => {
+	let customer_id = req.body.customer_id;
+	await db.task(async t => {
+		let favorites = await t.any(`SELECT * FROM customer_favorite WHERE customer_id = $1`, [customer_id]);
+
+		return res.json({success: true, data: favorites});
+	});
+
+	}));
 
 module.exports = router;
 
