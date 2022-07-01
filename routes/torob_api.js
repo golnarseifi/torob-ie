@@ -170,6 +170,36 @@ router.post('/customer/login', handle_error(async (req, res) => {
 	});
 }));
 
+router.post('/customer/get_categories', handle_error(async (req, res) => {
+	let categories = [];
+	// let sub_categories = [];
+	// let children = [];
+	await db.task(async t => {
+		 categories = await t.any(`SELECT *
+										  FROM category`);
+		// categories.push(categories);
 
-module.exports = router;
+		//  await Promise.mapSeries(main_categories, async main_category => {
+		// 	  sub_categories = await t.any(`SELECT *
+		// 								  FROM category
+		// 								  WHERE parent_id = main_category.id`);
+		//
+		// 	 await Promise.mapSeries(sub_categories, async sub_category => {
+		// 		 children = await t.any(`SELECT *
+		// 								  FROM category
+		// 								  WHERE parent_id = sub_category.id`);
+		// 	 });
+		//
+		// });
+
+
+		return res.json({success: true, data: categories});
+	})
+
+	}));
+
+
+
+
+	module.exports = router;
 
