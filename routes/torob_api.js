@@ -324,5 +324,23 @@ router.post('/customer/get_favorite_list', handle_error(async (req, res) => {
 
 	}));
 
+router.post('/customer/add_store', handle_error(async (req, res) => {
+	let admin_id = req.body.admin_id;
+	await db.task(async t => {
+		let store = await t.oneOrNone(`INSERT INTO store (admin_id)
+										VALUES ($1) RETURNING *`, [admin_id]);
+		return res.json({success: true, data: store});
+	})
+	}));
+
+router.post('/customer/get_store_list', handle_error(async (req, res) => {
+	let admin_id = req.body.admin_id;
+
+	await db.task(async t => {
+		let stores = await t.any(`SELECT * FROM store where admin_id = $1`, [admin_id]);
+		return res.json({success: true, data: stores});
+	});
+}));
+
 module.exports = router;
 
