@@ -208,5 +208,18 @@ router.post('/customer/get_all_products', handle_error(async (req, res) => {
 	});
 }));
 
-	module.exports = router;
+router.post('/customer/get_products_by_product_id', handle_error(async (req, res) => {
+	await db.task(async t => {
+		let product_page = await t.any(`SELECT product_store.*,
+                                          product.title,
+                                          product.category_id
+                                   FROM product_store
+                                            LEFT JOIN product ON product.ID = product_id
+                                            LEFT JOIN store ON store."id" = product_store.store_id
+                                   WHERE product_id = 1000`);
+		return res.json({success: true, data: product_page});
+	});
+}));
+
+module.exports = router;
 
