@@ -198,8 +198,15 @@ router.post('/customer/get_categories', handle_error(async (req, res) => {
 
 	}));
 
-
-
+router.post('/customer/get_all_products', handle_error(async (req, res) => {
+	await db.task(async t => {
+		let products = await t.any(`SELECT product_store.*, product.title, product.category_id
+                                    FROM product_store
+                                             LEFT JOIN product ON product.ID = product_id
+                                    WHERE product_store.price = (SELECT MIN(price) FROM product_store WHERE product_id = product_store.product_id)`);
+		return res.json({success: true, data: products});
+	});
+}));
 
 	module.exports = router;
 
