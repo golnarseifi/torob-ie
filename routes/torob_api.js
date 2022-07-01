@@ -221,5 +221,70 @@ router.post('/customer/get_products_by_product_id', handle_error(async (req, res
 	});
 }));
 
+router.post('/customer/add_new_product', handle_error(async (req, res) => {
+	let product_id = req.body.product_id;
+	let category_id = req.body.category_id;
+	let store_id = req.body.store_id;
+	let price = req.body.price;
+	let url = req.body.url;
+
+	if (!product_id || !store_id || !price || !url)
+		return res.status(200).json({success: false, message: 'product_id or store_id or price or quantity is wrong'});
+
+	await db.task(async t => {
+
+		let product = await t.oneOrNone(`SELECT * FROM product WHERE title = $1`, [title]);
+
+		if (product)
+			return res.status(200).json({success: false, errors: ['product_already_exist']});
+
+		 product = await t.oneOrNone(`INSERT INTO product (title, category_id)
+                                         VALUES ($1, $2) RETURNING *`, [title, category_id]);
+
+		let product_store = await t.oneOrNone(`SELECT *
+												FROM product_store
+												WHERE product_id = $1 AND store_id = $2`, [product.id, store_id]);
+		if (product_store)
+			return res.status(200).json({success: false, errors: ['product_already_exists_in_store']});
+
+		let store_product = await t.oneOrNone(`INSERT INTO product_store (product_id, store_id, price, url)
+											VALUES ($1, $2, $3, $4) RETURNING *`, [product.id, store_id, price, url]);
+
+		return res.json({success: true, data: store_product});
+	});
+}));
+
+router.post('/customer/add_product_from_list', handle_error(async (req, res) => {
+	let product_id = req.body.product_id;
+	let store_id = req.body.store_id;
+	let price = req.body.price;
+	let url = req.body.url;
+
+	if (!product_id || !store_id || !price || !url)
+		return res.status(200).json({success: false, message: 'product_id or store_id or price or quantity is wrong'});
+
+	await db.task(async t => {
+
+		let product_store = await t.oneOrNone(`SELECT *
+												FROM product_store
+												WHERE product_id = $1 AND store_id = $2`, [product.id, store_id]);
+		if (product_store)
+			return res.status(200).json({success: false, errors: ['product_already_exists_in_store']});
+
+		let store_product = await t.oneOrNone(`INSERT INTO product_store (product_id, store_id, price, url)
+											VALUES ($1, $2, $3, $4) RETURNING *`, [product_id, store_id, price, url]);
+
+		return res.json({success: true, data: store_product});
+	});
+}));
+
+router.post('/customer/get_products_list', handle_error(async (req, res) => {
+	await db.task(async t => {
+		let products = await t.oneOrNone(`SELECT *
+												FROM product`);
+		return res.json({success: true, data: products});
+	});
+}));
+
 module.exports = router;
 
