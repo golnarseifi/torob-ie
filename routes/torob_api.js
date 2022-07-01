@@ -286,5 +286,19 @@ router.post('/customer/get_products_list', handle_error(async (req, res) => {
 	});
 }));
 
+router.post('/customer/set_product_favorite_status', handle_error(async (req, res) => {
+	let product_id = req.body.product_id;
+	let status = req.body.status;
+
+	if (!product_id || !status)
+		return res.status(200).json({success: false, message: 'product_id or status is wrong'});
+
+	await db.task(async t => {
+		let product = await t.oneOrNone(`UPDATE product SET favorite = $1 WHERE ID = $2 RETURNING *`, [status, product_id]);
+		return res.json({success: true, data: product});
+	});
+}));
+
+
 module.exports = router;
 
