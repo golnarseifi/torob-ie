@@ -50,7 +50,7 @@ async function send_otp(t, email, customer, res) {
 		console.log(`${code} is your Torob authentication code.`);
 	}
 	const output = {success: true, data: customer};
-	if (serverInTestingMode) output['code'] = code;
+	if (serverInTestingMode) output.data['code'] = code;
 	return res.json(output);
 }
 
@@ -193,18 +193,18 @@ router.post('/customer/get_categories', handle_error(async (req, res) => {
 		// });
 
 
-		return res.json({success: true, data: categories});
+		return res.json({success: true, data: {categories}});
 	})
 
 	}));
 
 router.post('/customer/get_all_products', handle_error(async (req, res) => {
 	await db.task(async t => {
-		let products = await t.any(`SELECT product_store.*, product.title, product.category_id
+		let products = await t.any(`SELECT store.name as store_name, product_store.*, product.title, product.category_id, product.photo
                                     FROM product_store
                                              LEFT JOIN product ON product.ID = product_id
-                                    WHERE product_store.price = (SELECT MIN(price) FROM product_store WHERE product_id = product_store.product_id)`);
-		return res.json({success: true, data: products});
+                                             LEFT JOIN store ON store.ID = store_id`);
+		return res.json({success: true, data: {products}});
 	});
 }));
 
@@ -216,8 +216,8 @@ router.post('/customer/get_products_by_product_id', handle_error(async (req, res
                                    FROM product_store
                                             LEFT JOIN product ON product.ID = product_id
                                             LEFT JOIN store ON store."id" = product_store.store_id
-                                   WHERE product_id = 1000`);
-		return res.json({success: true, data: product_page});
+                                   WHERE product_id = $1`, [req.body.product_id]);
+		return res.json({success: true, data: {product_page}});
 	});
 }));
 
