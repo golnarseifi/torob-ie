@@ -223,6 +223,7 @@ router.post('/customer/get_products_by_product_id', handle_error(async (req, res
 
 router.post('/customer/add_new_product', handle_error(async (req, res) => {
 	let product_id = req.body.product_id;
+	let title = req.body.title;
 	let category_id = req.body.category_id;
 	let store_id = req.body.store_id;
 	let price = req.body.price;
@@ -250,7 +251,7 @@ router.post('/customer/add_new_product', handle_error(async (req, res) => {
 		let store_product = await t.oneOrNone(`INSERT INTO product_store (product_id, store_id, price, url)
 											VALUES ($1, $2, $3, $4) RETURNING *`, [product.id, store_id, price, url]);
 
-		return res.json({success: true, data: store_product});
+		return res.json({success: true});
 	});
 }));
 
@@ -265,37 +266,38 @@ router.post('/customer/add_product_from_list', handle_error(async (req, res) => 
 
 	await db.task(async t => {
 
-		let product_store = await t.oneOrNone(`SELECT *
+		let product_store = await t.any(`SELECT *
 												FROM product_store
-												WHERE product_id = $1 AND store_id = $2`, [product.id, store_id]);
+												WHERE product_id = $1 AND store_id = $2`, [product_id, store_id]);
 		if (product_store)
 			return res.status(200).json({success: false, errors: ['product_already_exists_in_store']});
 
 		let store_product = await t.oneOrNone(`INSERT INTO product_store (product_id, store_id, price, url)
 											VALUES ($1, $2, $3, $4) RETURNING *`, [product_id, store_id, price, url]);
 
-		return res.json({success: true, data: store_product});
+		return res.json({success: true});
 	});
 }));
 
 router.post('/customer/get_products_list', handle_error(async (req, res) => {
 	await db.task(async t => {
-		let products = await t.oneOrNone(`SELECT *
+		let products = await t.any(`SELECT *
 												FROM product`);
-		return res.json({success: true, data: products});
+		return res.json({success: true, data: {products}});
 	});
 }));
 
 router.post('/customer/set_product_favorite_status', handle_error(async (req, res) => {
 	let product_id = req.body.product_id;
-	let status = req.body.status;
+	let customer_id = req.body.customer_id;
 
-	if (!product_id || !status)
+	if (!product_id  || !customer_id)
 		return res.status(200).json({success: false, message: 'product_id or status is wrong'});
 
 	await db.task(async t => {
-		let product = await t.oneOrNone(`UPDATE product SET favorite = $1 WHERE ID = $2 RETURNING *`, [status, product_id]);
-		return res.json({success: true, data: product});
+		await t.oneOrNone(`INSERT INTO customer_favorite (product_id, customer_id)
+                                         VALUES ($1, $2) RETURNING *`, [product_id, customer_id]);
+		return res.json({success: true});
 	});
 }));
 
@@ -309,7 +311,7 @@ router.post('/customer/report_store', handle_error(async (req, res) => {
 		return res.status(200).json({success: false, message: 'store_id or description or customer_id or product_id is wrong'});
 
 	await db.task(async t => {
-		let report = await t.oneOrNone(`INSERT INTO report (store_id, description, product_id)
+		let report = await t.oneOrNone(`INSERT INTO report (store_id, description, customer_id, product_id)
 										VALUES ($1, $2, $3, $4) RETURNING *`, [store_id, description, customer_id, product_id]);
 		return res.json({success: true, data: report});
 	});
@@ -338,16 +340,17 @@ router.post('/customer/get_favorite_list', handle_error(async (req, res) => {
 	await db.task(async t => {
 		let favorites = await t.any(`SELECT * FROM customer_favorite WHERE customer_id = $1`, [customer_id]);
 
-		return res.json({success: true, data: favorites});
+		return res.json({success: true, data: {favorites}});
 	});
 
 	}));
 
 router.post('/customer/add_store', handle_error(async (req, res) => {
 	let admin_id = req.body.admin_id;
+	let name = req.body.name;
 	await db.task(async t => {
-		let store = await t.oneOrNone(`INSERT INTO store (admin_id)
-										VALUES ($1) RETURNING *`, [admin_id]);
+		let store = await t.oneOrNone(`INSERT INTO store (admin_id, name)
+										VALUES ($1, $2) RETURNING *`, [admin_id, name]);
 		return res.json({success: true, data: store});
 	})
 	}));
@@ -357,7 +360,7 @@ router.post('/customer/get_store_list', handle_error(async (req, res) => {
 
 	await db.task(async t => {
 		let stores = await t.any(`SELECT * FROM store where admin_id = $1`, [admin_id]);
-		return res.json({success: true, data: stores});
+		return res.json({success: true, data: {stores}});
 	});
 }));
 
