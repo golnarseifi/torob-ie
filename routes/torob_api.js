@@ -1,4 +1,6 @@
 const router = require("express").Router();
+const express = require("express");
+const app = express();
 const _ = require("lodash");
 const moment = require("moment");
 const crypto = require("crypto");
@@ -331,7 +333,7 @@ router.post('/customer/get_admin_reports', handle_error(async (req, res) => {
                                    FROM report
                                             LEFT JOIN product_store ON product_store.product_id = report.product_id
                                    WHERE report.store_id = $1`, [store_id]);
-		return res.json({success: true, data: reports});
+		return res.json({success: true, data: {reports}});
 	});
 }));
 
@@ -363,6 +365,7 @@ router.post('/customer/get_store_list', handle_error(async (req, res) => {
 		return res.json({success: true, data: {stores}});
 	});
 }));
+
 
 module.exports = router;
 
